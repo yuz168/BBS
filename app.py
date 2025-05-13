@@ -5,8 +5,6 @@ import os
 
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
-
-# Renderの環境で一時的なデータベースファイルを作成するパス
 DATABASE_PATH = os.path.join('/tmp', DATABASE)
 
 def get_db():
@@ -42,24 +40,21 @@ def execute_db(query, args=()):
 
 @app.route('/')
 def index():
-    posts = query_db('SELECT id, text, created_at FROM posts ORDER BY id DESC')
+    posts = query_db('SELECT id, name, text, created_at FROM posts ORDER BY id DESC')
     return render_template('index.html', posts=posts)
 
 @app.route('/post', methods=['POST'])
 def post():
+    name = request.form.get('name')  # 名前を取得
     text = request.form['text']
     now = datetime.now()
     created_at = now.strftime('%Y-%m-%d %H:%M:%S')
-    execute_db('INSERT INTO posts (text, created_at) VALUES (?, ?)', (text, created_at))
+    execute_db('INSERT INTO posts (name, text, created_at) VALUES (?, ?, ?)', (name, text, created_at))
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Renderではこの部分は通常使用されません
-    # app.run(debug=True)
     pass
 
-# アプリケーション起動前にデータベースを初期化する (Renderの起動時に実行される)
 with app.app_context():
-    # データベースファイルが存在しない場合に初期化を試みる
     if not os.path.exists(DATABASE_PATH):
         init_db()
