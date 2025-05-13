@@ -43,9 +43,9 @@
             const passwordInput = document.getElementById('password');
             const postForm = document.getElementById('postForm');
 
-            // Cookieから名前とパスワードを読み込んで入力欄に設定
-            const savedName = getCookie('name');
-            const savedPassword = getCookie('password');
+            // LocalStorageから名前とパスワードを読み込んで入力欄に設定
+            const savedName = localStorage.getItem('name');
+            const savedPassword = localStorage.getItem('password');
             if (savedName) {
                 nameInput.value = savedName;
             }
@@ -53,34 +53,11 @@
                 passwordInput.value = savedPassword;
             }
 
-            // フォーム送信時に名前とパスワードをCookieに保存
+            // フォーム送信時に名前とパスワードをLocalStorageに保存
             postForm.addEventListener('submit', function() {
-                setCookie('name', nameInput.value, 30); // 30日間保存
-                setCookie('password', passwordInput.value, 30); // 30日間保存
+                localStorage.setItem('name', nameInput.value);
+                localStorage.setItem('password', passwordInput.value);
             });
-
-            function setCookie(name, value, days) {
-                const date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                const expires = "expires=" + date.toUTCString();
-                document.cookie = name + "=" + value + ";" + expires + ";path=/";
-            }
-
-            function getCookie(name) {
-                const cookieName = name + "=";
-                const decodedCookie = decodeURIComponent(document.cookie);
-                const ca = decodedCookie.split(';');
-                for(let i = 0; i < ca.length; i++) {
-                    let c = ca[i];
-                    while (c.charAt(0) === ' ') {
-                        c = c.substring(1);
-                    }
-                    if (c.indexOf(cookieName) === 0) {
-                        return c.substring(cookieName.length, c.length);
-                    }
-                }
-                return "";
-            }
         });
     </script>
 </body>
