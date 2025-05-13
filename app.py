@@ -7,7 +7,8 @@ import hashlib
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
 DATABASE_PATH = os.path.join('/tmp', DATABASE)
-MAX_TEXT_LENGTH = 60  # 最大文字数を定義
+MAX_TEXT_LENGTH = 60
+MAX_POSTS = 10  # 投稿数の上限
 
 def get_db():
     conn = sqlite3.connect(DATABASE_PATH)
@@ -40,10 +41,19 @@ def execute_db(query, args=()):
     conn.commit()
     cur.close()
 
+def clear_all_posts():
+    db = get_db()
+    db.execute('DELETE FROM posts')
+    db.commit()
+
+def get_post_count():
+    result = query_db('SELECT COUNT(*) FROM posts', one=True)
+    return result[0] if result else 0
+
 @app.route('/')
 def index():
     posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
-    return render_template('index.html', posts=posts, error=None) # エラーメッセージ表示用
+    return render_template('index.html', posts=posts, error=None)
 
 @app.route('/post', methods=['POST'])
 def post():
@@ -61,6 +71,9 @@ def post():
         return render_template('index.html', posts=posts, error=error)
     else:
         execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
+        post_count = get_post_count()
+        if post_count > MAX_POSTS:
+            clear_all_posts()
         return redirect(url_for('index'))
 
 if __name__ == '__main__':
