@@ -20,7 +20,12 @@
     <h2>投稿一覧</h2>
     <ul>
         {% for post in posts %}
-        <li>{{ post.created_at }} - <strong>{{ post.name }}</strong>: {{ post.text }}</li>
+        <li>
+            ID: {{ post.id }} -
+            {{ post.created_at }} -
+            <strong>{{ post.name }}</strong>:
+            {{ post.text }}
+        </li>
         {% endfor %}
     </ul>
 </body>
