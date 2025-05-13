@@ -84,14 +84,11 @@ def post():
         posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
         return render_template('index.html', posts=posts, error=error)
     else:
-        response = make_response(redirect(url_for('index')))
-        response.set_cookie('name', name, httponly=True, samesite='Lax')
-        response.set_cookie('password', password, httponly=True, samesite='Lax')
         execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
         post_count = get_post_count()
         if post_count > MAX_POSTS:
             clear_all_posts()
-        return response
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     pass
