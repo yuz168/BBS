@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import datetime
 import os
@@ -7,8 +7,8 @@ import hashlib
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
 DATABASE_PATH = os.path.join('/tmp', DATABASE)
-MAX_TEXT_LENGTH = 60
-MAX_POSTS = 1000
+MAX_TEXT_LENGTH = 140
+MAX_POSTS = 10  # 投稿数の上限
 
 def get_db():
     conn = sqlite3.connect(DATABASE_PATH)
@@ -77,11 +77,11 @@ def post():
         posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
         return render_template('index.html', posts=posts, error=error)
     else:
-        response = make_response(redirect(url_for('index')))
-        # HTTPOnlyフラグを設定 (JavaScriptからのアクセスを制限)
-        response.set_cookie('name', name, httponly=True, samesite='Lax')
-        response.set_cookie('password', password, httponly=True, samesite='Lax')
-        return response
+        execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
+        post_count = get_post_count()
+        if post_count > MAX_POSTS:
+            clear_all_posts()
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     pass
