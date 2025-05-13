@@ -6,7 +6,7 @@
 <body>
     <h1>supermochiBBS</h1>
     <h2>ようこそsupermochiBBSへ</h2>
-    <form action="/post" method="post">
+  <form action="/post" method="post" id="postForm">
         <div>
             <label for="name">名前：</label>
             <input type="text" id="name" name="name">
@@ -17,21 +17,71 @@
         </div>
         <div>
             <label for="text">投稿内容：</label>
-            <textarea name="text" rows="4" cols="50" required maxlength="60"></textarea>
+            <textarea name="text" rows="4" cols="50" required maxlength="140"></textarea>
         </div>
         <button type="submit">投稿</button>
     </form>
     <hr>
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
     <h2>投稿一覧</h2>
     <ul>
         {% for post in posts %}
         <li>
-            投稿番号: {{ post.id }} (ID: {{ post.password_id }}) -
+            ID: {{ post.id }} (パスワードID: {{ post.password_id }}) -
             {{ post.created_at }} -
             <strong>{{ post.name }}</strong>:
             {{ post.text }}
         </li>
         {% endfor %}
     </ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('name');
+            const passwordInput = document.getElementById('password');
+            const postForm = document.getElementById('postForm');
+
+            // Cookieから名前とパスワードを読み込んで入力欄に設定
+            const savedName = getCookie('name');
+            const savedPassword = getCookie('password');
+            if (savedName) {
+                nameInput.value = savedName;
+            }
+            if (savedPassword) {
+                passwordInput.value = savedPassword;
+            }
+
+            // フォーム送信時に名前とパスワードをCookieに保存
+            postForm.addEventListener('submit', function() {
+                setCookie('name', nameInput.value, 30); // 30日間保存
+                setCookie('password', passwordInput.value, 30); // 30日間保存
+            });
+
+            function setCookie(name, value, days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                const expires = "expires=" + date.toUTCString();
+                document.cookie = name + "=" + value + ";" + expires + ";path=/";
+            }
+
+            function getCookie(name) {
+                const cookieName = name + "=";
+                const decodedCookie = decodeURIComponent(document.cookie);
+                const ca = decodedCookie.split(';');
+                for(let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(cookieName) === 0) {
+                        return c.substring(cookieName.length, c.length);
+                    }
+                }
+                return "";
+            }
+        });
+    </script>
 </body>
 </html>
