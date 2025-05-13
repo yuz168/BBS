@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import datetime
 import os
+import hashlib  # ハッシュ化のためのライブラリ
 
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
@@ -40,16 +41,20 @@ def execute_db(query, args=()):
 
 @app.route('/')
 def index():
-    posts = query_db('SELECT id, name, text, created_at FROM posts ORDER BY id DESC')
+    posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
     return render_template('index.html', posts=posts)
 
 @app.route('/post', methods=['POST'])
 def post():
     name = request.form.get('name')
+    password = request.form.get('password')  # パスワードを取得
     text = request.form['text']
     now = datetime.now()
     created_at = now.strftime('%Y-%m-%d %H:%M:%S')
-    execute_db('INSERT INTO posts (name, text, created_at) VALUES (?, ?, ?)', (name, text, created_at))
+
+    # パスワードをハッシュ化してIDを生成
+    hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+    execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, hashed_password, text, created_at))
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
