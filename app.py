@@ -1,12 +1,22 @@
+RenderでFlaskアプリケーションをデプロイする場合、いくつか修正を加える必要があります。主な変更点は、データベースの扱いの変更と、Renderがアプリケーションを起動する方法に合わせることです。
+
+修正後の app.py:
+
+Python
+
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
 
+# Renderの環境で一時的なデータベースファイルを作成するパス
+DATABASE_PATH = os.path.join('/tmp', DATABASE)
+
 def get_db():
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -50,4 +60,12 @@ def post():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Renderではこの部分は通常使用されません
+    # app.run(debug=True)
+    pass
+
+# アプリケーション起動前にデータベースを初期化する (Renderの起動時に実行される)
+with app.app_context():
+    # データベースファイルが存在しない場合に初期化を試みる
+    if not os.path.exists(DATABASE_PATH):
+        init_db()
