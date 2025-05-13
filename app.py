@@ -72,16 +72,26 @@ def post():
     hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
     short_password_id = hashed_password[:8]
 
-    if len(text) > MAX_TEXT_LENGTH:
+    error = None
+    if not name:
+        error = "名前を入力してください。"
+    elif not password:
+        error = "パスワードを入力してください。"
+    elif len(text) > MAX_TEXT_LENGTH:
         error = f"投稿内容は{MAX_TEXT_LENGTH}文字以内で入力してください。"
+
+    if error:
         posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
         return render_template('index.html', posts=posts, error=error)
     else:
+        response = make_response(redirect(url_for('index')))
+        response.set_cookie('name', name, httponly=True, samesite='Lax')
+        response.set_cookie('password', password, httponly=True, samesite='Lax')
         execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
         post_count = get_post_count()
         if post_count > MAX_POSTS:
             clear_all_posts()
-        return redirect(url_for('index'))
+        return response
 
 if __name__ == '__main__':
     pass
