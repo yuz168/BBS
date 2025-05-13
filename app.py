@@ -45,7 +45,7 @@ def index():
 
 @app.route('/post', methods=['POST'])
 def post():
-    name = request.form.get('name')  # 名前を取得
+    name = request.form.get('name')
     text = request.form['text']
     now = datetime.now()
     created_at = now.strftime('%Y-%m-%d %H:%M:%S')
