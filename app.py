@@ -1,9 +1,3 @@
-RenderでFlaskアプリケーションをデプロイする場合、いくつか修正を加える必要があります。主な変更点は、データベースの扱いの変更と、Renderがアプリケーションを起動する方法に合わせることです。
-
-修正後の app.py:
-
-Python
-
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import datetime
