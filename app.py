@@ -43,8 +43,15 @@ def execute_db(query, args=()):
 
 def clear_all_posts():
     db = get_db()
-    db.execute('DELETE FROM posts')
-    db.commit()
+    try:
+        db.execute('DROP TABLE IF EXISTS posts')
+        db.commit()
+        with app.open_resource('schema.sql', mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
+    except sqlite3.Error as e:
+        print(f"Error clearing and resetting posts table: {e}")
+        db.rollback()
 
 def get_post_count():
     result = query_db('SELECT COUNT(*) FROM posts', one=True)
