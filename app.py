@@ -7,8 +7,8 @@ import hashlib
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
 DATABASE_PATH = os.path.join('/tmp', DATABASE)
-MAX_TEXT_LENGTH = 140
-MAX_POSTS = 10  # 投稿数の上限
+MAX_TEXT_LENGTH = 60
+MAX_POSTS = 1000  # 投稿数の上限
 
 def get_db():
     conn = sqlite3.connect(DATABASE_PATH)
