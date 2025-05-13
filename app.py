@@ -53,7 +53,7 @@ def post():
     created_at = now.strftime('%Y-%m-%d %H:%M:%S')
 
     # パスワードをハッシュ化してIDを生成
-     hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+    hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
     short_password_id = hashed_password[:7]  # 最初の7文字を使用
     execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
     return redirect(url_for('index'))
