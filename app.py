@@ -2,11 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import datetime
 import os
-import hashlib  # ハッシュ化のためのライブラリ
+import hashlib
 
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
 DATABASE_PATH = os.path.join('/tmp', DATABASE)
+MAX_TEXT_LENGTH = 60  # 最大文字数を定義
 
 def get_db():
     conn = sqlite3.connect(DATABASE_PATH)
@@ -42,21 +43,25 @@ def execute_db(query, args=()):
 @app.route('/')
 def index():
     posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
-    return render_template('index.html', posts=posts)
+    return render_template('index.html', posts=posts, error=None) # エラーメッセージ表示用
 
 @app.route('/post', methods=['POST'])
 def post():
     name = request.form.get('name')
-    password = request.form.get('password')  # パスワードを取得
+    password = request.form.get('password')
     text = request.form['text']
     now = datetime.now()
     created_at = now.strftime('%Y-%m-%d %H:%M:%S')
-
-    # パスワードをハッシュ化してIDを生成
     hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
-    short_password_id = hashed_password[:7]  # 最初の7文字を使用
-    execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
-    return redirect(url_for('index'))
+    short_password_id = hashed_password[:8]
+
+    if len(text) > MAX_TEXT_LENGTH:
+        error = f"投稿内容は{MAX_TEXT_LENGTH}文字以内で入力してください。"
+        posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
+        return render_template('index.html', posts=posts, error=error)
+    else:
+        execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     pass
