@@ -27,7 +27,7 @@
     <ul id="post-list">
         {% for post in posts %}
         <li data-post-id="{{ post.id }}">
-            ID: {{ post.id }} (パスワードID: {{ post.password_id }}) -
+            投稿番号: {{ post.id }} (ID: {{ post.password_id }}) -
             {{ post.created_at }} -
             <strong>{{ post.name }}</strong>:
             {{ post.text }}
@@ -42,6 +42,7 @@
             const postError = document.getElementById('post-error');
             const nameInput = document.getElementById('name');
             const passwordInput = document.getElementById('password');
+            const textInput = document.getElementById('text'); // 投稿内容の入力欄
 
             // LocalStorageから名前とパスワードを読み込んで入力欄に設定
             const savedName = localStorage.getItem('name');
@@ -68,7 +69,7 @@
                         postError.textContent = data.error;
                     } else {
                         postError.textContent = '';
-                        // postForm.reset(); // ← コメントアウトまたは削除：フォームをリセットしない
+                        textInput.value = ''; // ← 投稿内容の入力欄をクリア
                         // 新しい投稿を投稿一覧の先頭に追加
                         const newPost = data.post;
                         const newLi = document.createElement('li');
