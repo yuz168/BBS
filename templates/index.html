@@ -6,7 +6,7 @@
 <body>
     <h1>supermochiBBS</h1>
     <h2>supermochiBBSへようこそ</h2>
-        <form id="postForm">
+    <form id="postForm">
         <div>
             <label for="name">名前：</label>
             <input type="text" id="name" name="name" required>
@@ -27,7 +27,7 @@
     <ul id="post-list">
         {% for post in posts %}
         <li data-post-id="{{ post.id }}">
-            投稿番号: {{ post.id }} (ID: {{ post.password_id }}) -
+            ID: {{ post.id }} (パスワードID: {{ post.password_id }}) -
             {{ post.created_at }} -
             <strong>{{ post.name }}</strong>:
             {{ post.text }}
@@ -40,6 +40,18 @@
             const postForm = document.getElementById('postForm');
             const postList = document.getElementById('post-list');
             const postError = document.getElementById('post-error');
+            const nameInput = document.getElementById('name');
+            const passwordInput = document.getElementById('password');
+
+            // LocalStorageから名前とパスワードを読み込んで入力欄に設定
+            const savedName = localStorage.getItem('name');
+            const savedPassword = localStorage.getItem('password');
+            if (savedName) {
+                nameInput.value = savedName;
+            }
+            if (savedPassword) {
+                passwordInput.value = savedPassword;
+            }
 
             postForm.addEventListener('submit', function(event) {
                 event.preventDefault(); // デフォルトのフォーム送信を阻止
@@ -56,7 +68,7 @@
                         postError.textContent = data.error;
                     } else {
                         postError.textContent = '';
-                        postForm.reset(); // フォームをリセット
+                        // postForm.reset(); // ← コメントアウトまたは削除：フォームをリセットしない
                         // 新しい投稿を投稿一覧の先頭に追加
                         const newPost = data.post;
                         const newLi = document.createElement('li');
@@ -68,6 +80,10 @@
                             ${newPost.text}
                         `;
                         postList.insertBefore(newLi, postList.firstChild);
+
+                        // 投稿成功時に LocalStorage に保存
+                        localStorage.setItem('name', nameInput.value);
+                        localStorage.setItem('password', passwordInput.value);
                     }
                 })
                 .catch(error => {
