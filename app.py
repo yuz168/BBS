@@ -39,7 +39,9 @@ def execute_db(query, args=()):
     cur = conn.cursor()
     cur.execute(query, args)
     conn.commit()
+    last_row_id = cur.lastrowid
     cur.close()
+    return last_row_id
 
 def clear_all_posts():
     db = get_db()
@@ -57,13 +59,16 @@ def get_post_count():
     result = query_db('SELECT COUNT(*) FROM posts', one=True)
     return result[0] if result else 0
 
+def get_post_by_id(post_id):
+    return query_db('SELECT id, name, password_id, text, created_at FROM posts WHERE id = ?', [post_id], one=True)
+
 @app.route('/')
 def index():
     posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
     return render_template('index.html', posts=posts, error=None)
 
-@app.route('/post', methods=['POST'])
-def post():
+@app.route('/post_async', methods=['POST'])
+def post_async():
     name = request.form.get('name')
     password = request.form.get('password')
     text = request.form['text']
@@ -72,23 +77,19 @@ def post():
     hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
     short_password_id = hashed_password[:8]
 
-    error = None
     if not name:
-        error = "名前を入力してください。"
+        return jsonify({'error': '名前を入力してください。'}), 400
     elif not password:
-        error = "パスワードを入力してください。"
+        return jsonify({'error': 'パスワードを入力してください。'}), 400
     elif len(text) > MAX_TEXT_LENGTH:
-        error = f"投稿内容は{MAX_TEXT_LENGTH}文字以内で入力してください。"
-
-    if error:
-        posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
-        return render_template('index.html', posts=posts, error=error)
+        return jsonify({'error': f'投稿内容は{MAX_TEXT_LENGTH}文字以内で入力してください。'}), 400
     else:
-        execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
+        last_id = execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
         post_count = get_post_count()
         if post_count > MAX_POSTS:
             clear_all_posts()
-        return redirect(url_for('index'))
+        new_post = get_post_by_id(last_id)
+        return jsonify({'post': dict(new_post)}), 201
 
 if __name__ == '__main__':
     pass
