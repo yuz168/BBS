@@ -27,7 +27,7 @@
     <ul id="post-list">
         {% for post in posts %}
         <li data-post-id="{{ post.id }}">
-            ID: {{ post.id }} (パスワードID: {{ post.password_id }}) -
+            投稿番号: {{ post.id }} (ID: {{ post.password_id }}) -
             {{ post.created_at }} -
             <strong>{{ post.name }}</strong>:
             {{ post.text }}
