@@ -85,7 +85,7 @@
                         newPostContainer.classList.add('post-container');
                         newPostContainer.dataset.postId = newPost.id;
                         newPostContainer.innerHTML = `
-                            ID: ${newPost.id} (パスワードID: ${newPost.password_id}) -
+                            投稿番号: ${newPost.id} (ID: ${newPost.password_id}) -
                             ${newPost.created_at} -
                             <strong>${newPost.name}</strong>:<br>
                             ${newPost.text}
