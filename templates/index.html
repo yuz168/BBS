@@ -36,7 +36,7 @@
     <div id="post-list">
         {% for post in posts %}
         <div class="post-container" data-post-id="{{ post.id }}">
-            ID: {{ post.id }} (パスワードID: {{ post.password_id }}) -
+            投稿番号: {{ post.id }} (ID: {{ post.password_id }}) -
             {{ post.created_at }} -
             <strong>{{ post.name }}</strong>:<br>
             {{ post.text }}
