@@ -3,12 +3,14 @@ import sqlite3
 from datetime import datetime
 import os
 import hashlib
+import pytz  # タイムゾーン変換ライブラリ
 
 app = Flask(__name__)
 DATABASE = 'bulletinboard.db'
 DATABASE_PATH = os.path.join('/tmp', DATABASE)
 MAX_TEXT_LENGTH = 60
-MAX_POSTS = 1000  # 投稿数の上限
+MAX_POSTS = 1000
+JST = pytz.timezone('Asia/Tokyo')  # 日本標準時のタイムゾーンオブジェクト
 
 def get_db():
     conn = sqlite3.connect(DATABASE_PATH)
@@ -62,18 +64,29 @@ def get_post_count():
 def get_post_by_id(post_id):
     return query_db('SELECT id, name, password_id, text, created_at FROM posts WHERE id = ?', [post_id], one=True)
 
+def format_datetime_jst(dt_str):
+    """UTCの文字列を日本標準時のdatetimeオブジェクトに変換し、フォーマットする"""
+    utc_dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
+    jst_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(JST)
+    return jst_dt.strftime('%Y-%m-%d %H:%M:%S')
+
 @app.route('/')
 def index():
     posts = query_db('SELECT id, name, password_id, text, created_at FROM posts ORDER BY id DESC')
-    return render_template('index.html', posts=posts, error=None)
+    formatted_posts = []
+    for post in posts:
+        formatted_post = dict(post)
+        formatted_post['created_at'] = format_datetime_jst(post['created_at'])
+        formatted_posts.append(formatted_post)
+    return render_template('index.html', posts=formatted_posts, error=None)
 
 @app.route('/post_async', methods=['POST'])
 def post_async():
     name = request.form.get('name')
     password = request.form.get('password')
     text = request.form['text']
-    now = datetime.now()
-    created_at = now.strftime('%Y-%m-%d %H:%M:%S')
+    now_utc = datetime.now(pytz.utc)  # UTCで現在時刻を取得
+    created_at_utc_str = now_utc.strftime('%Y-%m-%d %H:%M:%S')
     hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
     short_password_id = hashed_password[:8]
 
@@ -84,12 +97,13 @@ def post_async():
     elif len(text) > MAX_TEXT_LENGTH:
         return jsonify({'error': f'投稿内容は{MAX_TEXT_LENGTH}文字以内で入力してください。'}), 400
     else:
-        last_id = execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at))
+        last_id = execute_db('INSERT INTO posts (name, password_id, text, created_at) VALUES (?, ?, ?, ?)', (name, short_password_id, text, created_at_utc_str))
         post_count = get_post_count()
         if post_count > MAX_POSTS:
             clear_all_posts()
         new_post = get_post_by_id(last_id)
-        return jsonify({'post': dict(new_post)}), 201
+        formatted_created_at = format_datetime_jst(new_post['created_at'])
+        return jsonify({'post': {'id': new_post['id'], 'name': new_post['name'], 'password_id': new_post['password_id'], 'text': new_post['text'], 'created_at': formatted_created_at}}), 201
 
 if __name__ == '__main__':
     pass
